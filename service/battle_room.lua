@@ -13,6 +13,9 @@ local room_data = {
   cur_control_player = 0,
   room_wait_switch_player_time = 0,
   action_confirm_list = {},
+  -- key = grid id
+  -- value = card info 
+  card_grid_distribution = {},
 }
 
 battle_const = {
@@ -107,7 +110,9 @@ function battle_room_cmd.client_action(action_info)
       end
     end
   elseif action_info.action_type == player_action_type.assign_active_effect_target then
-    -- calculate battle states according to 
+    -- action info contains information of active effects which requires target assignment
+    -- calculate battle states 
+    local target = action_info.target_info
   elseif action_info.action_type == player_action_type.launch_move then
     
   elseif action_info.action_type == player_action_type.launch_special_skill then

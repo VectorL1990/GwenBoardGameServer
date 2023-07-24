@@ -10,13 +10,49 @@ local battle_room
 
 trigger_prerequisite_enum = {
   being_hurt = {
-    trigger_func = function(active_hurt, threshold)
-      if active_hurt[1] > threshold[1] then
+    trigger_func = function(active_hurt, prereq_values)
+      if active_hurt[1] > prereq_values[1] then
         return true
       end
     end
   },
-  surround_card_nb,
+  surround_card_nb = {
+    -- this prerequisite requires grid informations surrounded target grid
+    -- room_data contains information about distribution info of cards and grids
+    -- trigger_grid contains information about which grid being triggered
+    trigger_func = function(room_data, trigger_grid, prereq_values)
+      local grid_x = trigger_grid % room_data.board_w
+      local grid_y = trigger_grid // room_data.board_w
+      local surround_card_nb = 0
+      if (grid_x ~= 0) then
+        -- which means grid is left most
+        if room_data.card_grid_distribution[tostring(trigger_grid - 1)] then
+          -- which means left grid contains an available card
+          surround_card_nb  = surround_card_nb + 1
+        end
+      end
+      if (grid_x ~= (room_data.board_w - 1)) then
+        if room_data.card_grid_distribution[tostring(trigger_grid + 1)] then
+          surround_card_nb = surround_card_nb + 1
+        end
+      end
+      if (grid_y ~= 0) then
+        if room_data.card_grid_distribution[tostring(trigger_grid - room_data.board_w)] then
+          surround_card_nb  = surround_card_nb + 1
+        end
+      end
+      if (grid_y ~= (room_data.board_h - 1)) then
+        if room_data.card_grid_distribution[tostring(trigger_grid + room_data.board_w)] then
+          surround_card_nb = surround_card_nb + 1
+        end
+      end
+      if surround_card_nb >= prereq_values[0] then
+        return true
+      else
+        return false
+      end
+    end
+  },
   defence,
   by_special_attribute,
   by_special_string,
@@ -102,16 +138,15 @@ function card_rule.get_chararcter_active_effects(args)
 end
 
 
---[[
-  active_effect_params should contain tables like
-  active_effect_params = {
-    hurt = {2},
-    draw_card = {1, 2}
-  }
-  every table inside should contains informations both include
-  effect type and effect values
-  effect values should be interpreted independently
-]]
+
+-- active_effect_params should contain tables like
+-- active_effect_params = {
+--   hurt = {2},
+--   draw_card = {1, 2}
+-- }
+-- every table inside should contains informations both include
+-- effect type and effect values
+-- effect values should be interpreted independently
 local function search_passive_effects(character_info, active_effect_name, active_effect_params)
   local passive_effects = character_passive_effects_enum[character_info.name]
   for prereq_name, prereq_values in pairs(passive_effects.prerequisites) do
@@ -147,6 +182,10 @@ local function trigger_active_effects(args)
   -- 2. update target characters' states
   -- 3. send latest characters' information to clients
   
+end
+
+function card_rule.calculate_effect(args)
+  args.room_data.
 end
 
 local function attack(board_array2d, 

@@ -1,0 +1,62 @@
+.package {
+	type 0 : integer
+	session 1 : integer
+	ud 2 : string
+}
+
+ping 1 {}
+
+signup 2 {
+	request {
+		userid 0 : string
+	}
+	response {
+		ok 0 : boolean
+	}
+}
+
+signin 3 {
+	request {
+		userid 0 : string
+	}
+	response {
+		ok 0 : boolean
+	}
+}
+
+login 4 {
+	request {
+		user_name 0 : string
+	}
+	response {
+		resp 0 : boolean
+	}
+}
+
+testcmd 5 {
+	request {
+		testmsg 0 : string
+	}
+}
+
+sayhello 6 {
+	request {
+		msg 0 : string
+	}
+}
+
+client_confirm_agent 7 {
+	request {
+		msg 0 : string
+	}
+	response {
+		ok 0 : boolean
+	}
+}
+
+client_request_match 8 {
+	response {
+		ok 0 : boolean
+	}
+}
+

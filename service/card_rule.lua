@@ -3,14 +3,12 @@ local card_rule = {}
 
 local battle_room
 
---[[
-  there should be a effect triggering tree,
-  which can search all passive effects trigger by active effects
-]]
 
+-- there should be a effect triggering tree,
+-- which can search all passive effects trigger by active effects
 trigger_prerequisite_enum = {
   being_hurt = {
-    trigger_func = function(active_hurt, prereq_values)
+    trigger_passive_effect_func = function(active_hurt, prereq_values)
       if active_hurt[1] > prereq_values[1] then
         return true
       end
@@ -20,7 +18,7 @@ trigger_prerequisite_enum = {
     -- this prerequisite requires grid informations surrounded target grid
     -- room_data contains information about distribution info of cards and grids
     -- trigger_grid contains information about which grid being triggered
-    trigger_func = function(room_data, trigger_grid, prereq_values)
+    trigger_passive_effect_func = function(room_data, trigger_grid, prereq_values)
       local grid_x = trigger_grid % room_data.board_w
       local grid_y = trigger_grid // room_data.board_w
       local surround_card_nb = 0
@@ -156,7 +154,7 @@ local function search_passive_effects(character_info, active_effect_name, active
     for active_name, active_values in pairs(active_effect_params) do
       if prereq_name == active_name then
         get_correspond_effect = true
-        if trigger_prerequisite_enum[prereq_name].trigger_func(active_values, prereq_values) == false then
+        if trigger_prerequisite_enum[prereq_name].trigger_passive_effect_func(active_values, prereq_values) == false then
           -- which means this prerequisite is not satisfied
           return false
         end
@@ -184,8 +182,13 @@ local function trigger_active_effects(args)
   
 end
 
-function card_rule.calculate_effect(args)
-  args.room_data.
+function card_rule.calculate_effect(room_data, effect_info)
+  if effect_info.auto == true then
+    -- search all targets
+    for k, v in pairs(room_data.card_grid_distribution) do
+
+    end
+  end
 end
 
 local function attack(board_array2d, 

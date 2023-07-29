@@ -15,7 +15,7 @@ local room_data = {
   action_confirm_list = {},
   -- key = grid id
   -- value = card info 
-  card_grid_distribution = {},
+  grid_card_distribution = {},
 }
 
 battle_const = {
@@ -147,15 +147,6 @@ function battle_room_cmd.trigger_active_effects(args)
         wait_player_assign_target = true
         break
       end
-
-      --[[
-      if v.auto == true then
-        local effect_args = { v.effect_info}
-        local ok = pcall(card_rule.trigger_active_effects, effect_args)
-      else
-        wait_player_assign_target = true
-      end
-      ]]
       
     end
     -- if wait_player_assign_target is true, we should send msg to clients to

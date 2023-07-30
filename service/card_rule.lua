@@ -46,7 +46,7 @@ local battle_room
 prerequisite_trigger_func_table = {
   injury = {
     -- if character is hurt already, prerequisite satisfied
-    trigger_func = function(room_data, target_grid, effect_info)
+    trigger_func = function(room_data, target_grid, launch_grid, effect_info)
       if room_data[target_grid].cur_hp < room_data[target_grid].origin_hp then
         return true
       else
@@ -56,7 +56,7 @@ prerequisite_trigger_func_table = {
   },
   being_hurt = {
     -- if character is being hurt and hurt value is larger than prerequisite values
-    trigger_func = function(room_data, target_grid, effect_info)
+    trigger_func = function(room_data, target_grid, launch_grid, effect_info)
       if effect_info.hurt_values[1] > room_data[target_grid].prereqs.being_hurt.trigger_val then
         return true
       else
@@ -68,7 +68,7 @@ prerequisite_trigger_func_table = {
     -- this prerequisite requires grid informations surrounded target grid
     -- room_data contains information about distribution info of cards and grids
     -- trigger_grid contains information about which grid being triggered
-    trigger_func = function(room_data, trigger_grid, effect_info)
+    trigger_func = function(room_data, trigger_grid, launch_grid, effect_info)
       local grid_x = trigger_grid % room_data.board_w
       local grid_y = trigger_grid // room_data.board_w
       local surround_card_nb = 0
@@ -240,7 +240,7 @@ end
 -- states - string list which contains all states like "spy" "wound"
 -- hp
 -- shield
-function card_rule.calculate_effect(launch_grid, room_data, effect_info)
+function card_rule.calculate_effect(launch_grid, target_grid, room_data, effect_info)
   if effect_info.auto == true then
     -- search all targets by conditions, which means 
     for grid, character_info in pairs(room_data.grid_card_distribution) do
@@ -253,17 +253,35 @@ function card_rule.calculate_effect(launch_grid, room_data, effect_info)
       end
       -- we should filter targets by effect prerequisites
       local all_prereqs_satisfied = true
-      for prereq_key, rereq_val in pairs(effect_info.prereqs) do
-        if prerequisite_trigger_func_table[prereq_key].trigger_func(room_data, launch_grid, grid, effect_info) == false then
-          -- which means this character is not target, skip
-          all_prereqs_satisfied = false
-          break
+      if effect_info.prereqs then
+        for prereq_key, prereq_val in pairs(effect_info.prereqs) do
+          if prerequisite_trigger_func_table[prereq_key].trigger_func(room_data, grid, launch_grid, effect_info) == false then
+            -- which means this character is not target, skip
+            all_prereqs_satisfied = false
+            break
+          end
         end
       end
       if all_prereqs_satisfied == true then
         effect_calculation_table[effect_info.effect_name].calculation(room_data, launch_grid, grid, effect_info)
       end
       ::continue::
+    end
+  else
+    -- which means there exists a specified target
+    if target_grid ~= "" and room_data.grid_card_distribution[target_grid] then
+      local all_prereqs_satisfied = true
+      if effect_info.prereqs then
+        for prereq_key, prereq_val in pairs(effect_info.prereqs) do
+          if prerequisite_trigger_func_table[prereq_key].trigger_func(room_data, target_grid, launch_grid, effect_info) == false then
+            all_prereqs_satisfied = false
+            break
+          end
+        end
+        if all_prereqs_satisfied == true then
+          effect_calculation_table[effect_info.effect_name].calculation(room_data, launch_grid, target_grid, effect_info)
+        end
+      end
     end
   end
 end

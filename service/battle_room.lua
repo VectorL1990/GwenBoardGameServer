@@ -3,6 +3,17 @@ local service = require "service"
 local client = require "client"
 local log = require "log"
 
+action_info = {
+  action_type = "play_card",
+  play_card_info = {
+    card_name = "Alice",
+    grid_nb = "10"
+  },
+  assign_info = {
+    target_grid = "10",
+  }
+}
+
 local battle_room_cmd = {}
 local room_players = {}
 local room_state = battle_state_enum["default"]
@@ -16,6 +27,8 @@ local room_data = {
   -- key = grid id
   -- value = card info 
   grid_card_distribution = {},
+  last_play_grid = "",
+  last_launch_skill_info = {},
 }
 
 battle_const = {
@@ -65,7 +78,7 @@ function battle_room_cmd.Mainloop()
     -- 2. move a card
     -- 3. launch special skill
     -- if a player is time out, switch controller to another player
-    if (room_data.room_wait_switch_player_time >= battle_const.max_switch_player_time) then
+    if room_data.room_wait_switch_player_time >= battle_const.max_switch_player_time then
       -- which means it's time to switch controller 
       local ok = pcall(battle_room_cmd.player_end_round)
     else
@@ -95,6 +108,11 @@ end
 ]]
 function battle_room_cmd.client_action(action_info)
   if action_info.action_type == player_action_type.play_card then
+    -- we should tell whether this grid contains anyother characters
+    if room_data[action_info.play_card_info.grid_nb] then
+      local response = {ok = false, msg = "can not play a card on an occlupied grid"}
+      return false
+    end
     -- get card information from card_rule
     -- trigger all active effects of the card
     local character_name = {action_info.card_name}
@@ -112,7 +130,8 @@ function battle_room_cmd.client_action(action_info)
   elseif action_info.action_type == player_action_type.assign_active_effect_target then
     -- action info contains information of active effects which requires target assignment
     -- calculate battle states 
-    local target = action_info.target_info
+    local target_grid = action_info.assign_info.target_grid
+    card_rule.calculate_effect(room_data.last_play_grid, target_grid, room_data, room_data.last_launch_skill_info)
   elseif action_info.action_type == player_action_type.launch_move then
     
   elseif action_info.action_type == player_action_type.launch_special_skill then
@@ -121,41 +140,6 @@ function battle_room_cmd.client_action(action_info)
     local ok = pcall(battle_room_cmd.player_end_round)
   end
 end
-
-function battle_room_cmd.get_character_in_grid()
-  -- return current information character contained
-end
-
-function battle_room_cmd.trigger_active_effects(args)
-  -- args contain informations including
-  -- 1. card name
-  -- 2. 
-  local gridxy = {args.x, args.y}
-  local ok, character = pcall(battle_room_cmd.get_character_in_grid, gridxy)
-  -- if pcall failed or character info is empty
-  if character == nil then
-  else
-    -- go through all active effects character contained
-    local character_name = character.name
-    local ok, active_effects = pcall(card_rule.get_chararcter_active_effects, {character_name})
-    local wait_player_assign_target = false
-    for i, v in ipairs(active_effects) do
-      -- we should consider two cases in this step
-      -- if there's no necessary to assign target applying active effect, trigger effect automatically
-      -- if it requires player to assign target manually, switch room to another state
-      if v.auto == true then
-        wait_player_assign_target = true
-        break
-      end
-      
-    end
-    -- if wait_player_assign_target is true, we should send msg to clients to
-    -- ask player to assign target
-  end
-
-end
-
-
 
 
 service.init {
